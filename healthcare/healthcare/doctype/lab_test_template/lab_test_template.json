@@ -18,6 +18,7 @@
   "nursing_checklist_template",
   "column_break_3",
   "disabled",
+  "column_break_3",
   "lab_test_template_type",
   "is_billable",
   "lab_test_rate",
@@ -44,14 +45,20 @@
   "sample_qty",
   "column_break_33",
   "sample_details",
-  "medical_coding_section",
-  "medical_code",
-  "medical_code_standard",
   "worksheet_section",
   "worksheet_instructions",
   "result_legend_section",
   "legend_print_position",
   "result_legend",
+  "medical_coding_section",
+  "medical_code_standard",
+  "column_break_34",
+  "medical_code",
+  "service_order_defaults_section",
+  "service_order_category",
+  "patient_care_type",
+  "column_break_16",
+  "staff_role",
   "change_in_item"
  ],
  "fields": [
@@ -142,17 +149,17 @@
    "label": "Medical Coding"
   },
   {
+   "fieldname": "medical_code_standard",
+   "fieldtype": "Link",
+   "label": "Medical Code Standard",
+   "options": "Medical Code Standard"
+  },
+  {
    "depends_on": "medical_code_standard",
    "fieldname": "medical_code",
    "fieldtype": "Link",
    "label": "Medical Code",
    "options": "Medical Code"
-  },
-  {
-   "fieldname": "medical_code_standard",
-   "fieldtype": "Link",
-   "label": "Medical Code Standard",
-   "options": "Medical Code Standard"
   },
   {
    "depends_on": "eval:doc.lab_test_template_type == 'Single'",
@@ -227,6 +234,7 @@
    "no_copy": 1
   },
   {
+   "collapsible": 1,
    "fieldname": "sb_sample_collection",
    "fieldtype": "Section Break",
    "label": "Sample Collection"
@@ -348,6 +356,40 @@
    "fieldname": "link_existing_item",
    "fieldtype": "Check",
    "label": "Link existing Item"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "service_order_defaults_section",
+   "fieldtype": "Section Break",
+   "label": "Service Order Defaults"
+  },
+  {
+   "fieldname": "service_order_category",
+   "fieldtype": "Link",
+   "label": "Service Order Category",
+   "options": "Healthcare Service Order Category"
+  },
+  {
+   "fetch_from": "service_order_category.patient_care_type",
+   "fetch_if_empty": 1,
+   "fieldname": "patient_care_type",
+   "fieldtype": "Link",
+   "label": "Patient Care Type",
+   "options": "Patient Care Type"
+  },
+  {
+   "fieldname": "column_break_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "staff_role",
+   "fieldtype": "Link",
+   "label": "Staff Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "column_break_34",
+   "fieldtype": "Column Break"
   }
  ],
  "links": [],
