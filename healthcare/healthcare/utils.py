@@ -163,9 +163,9 @@ def get_lab_tests_to_invoice(patient, company):
 def get_clinical_procedures_to_invoice(patient, company):
 	clinical_procedures_to_invoice = []
 	procedures = frappe.get_list(
-		"Clinical Procedure",
-		fields="*",
-		filters={"patient": patient.name, "company": company, "invoiced": False},
+		'Clinical Procedure',
+		fields='*',
+		filters={'patient': patient.name, 'company': company, 'invoiced': False}
 	)
 	for procedure in procedures:
 		if not procedure.appointment:
@@ -268,6 +268,7 @@ def get_therapy_plans_to_invoice(patient, company):
 			"invoiced": 0,
 			"company": company,
 			"therapy_plan_template": ("!=", ""),
+			"docstatus": 1,
 		},
 	)
 	for plan in therapy_plans:
@@ -295,11 +296,12 @@ def get_therapy_sessions_to_invoice(patient, company):
 		"Therapy Session",
 		fields="*",
 		filters={
-			"patient": patient.name,
-			"invoiced": 0,
-			"company": company,
-			"therapy_plan": ("not in", therapy_plans_created_from_template),
-		},
+			'patient': patient.name,
+			'invoiced': 0,
+			'company': company,
+			'therapy_plan': ('not in', therapy_plans_created_from_template),
+			"docstatus": 1,
+		}
 	)
 	for therapy in therapy_sessions:
 		if not therapy.appointment:
@@ -319,20 +321,25 @@ def get_therapy_sessions_to_invoice(patient, company):
 
 def get_healthcare_service_orders_to_invoice(patient, company):
 	service_order_to_invoice = []
+
 	service_orders = frappe.get_list(
 		'Healthcare Service Order',
-		fields=['name'],
-		filters={'patient': patient.name, 'company': company, 'invoiced': False}
+		fields=['name', 'order_doctype', 'order_template', 'quantity', 'item_code'],
+		filters={
+			'patient': patient.name,
+			'company': company,
+			'invoiced': 0,
+			'docstatus': 1
+		}
 	)
 	for service_order in service_orders:
-		service_order_doc = frappe.get_doc('Healthcare Service Order', service_order.name)
-		item, is_billable = frappe.get_cached_value(service_order_doc.order_doctype, service_order_doc.order, ['item', 'is_billable'])
+		is_billable = frappe.get_cached_value(service_order.order_doctype, service_order.order_template, 'is_billable')
 		if is_billable:
 			service_order_to_invoice.append({
 				'reference_type': 'Healthcare Service Order',
 				'reference_name': service_order.name,
-				'service': item,
-				'qty': service_order_doc.quantity if service_order_doc.quantity else 1
+				'service': service_order.item_code,
+				'qty': service_order.quantity if service_order.quantity else 1
 			})
 	return service_order_to_invoice
 
