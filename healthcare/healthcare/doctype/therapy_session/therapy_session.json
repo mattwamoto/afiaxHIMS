@@ -34,6 +34,7 @@
   "total_counts_targeted",
   "column_break_25",
   "total_counts_completed",
+  "healthcare_service_order",
   "amended_from"
  ],
  "fields": [
@@ -218,6 +219,16 @@
    "fieldtype": "Link",
    "label": "Medical Code",
    "options": "Medical Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "healthcare_service_order",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Healthcare Service Order",
+   "no_copy": 1,
+   "options": "Healthcare Service Order",
+   "print_hide": 1,
    "read_only": 1
   }
  ],

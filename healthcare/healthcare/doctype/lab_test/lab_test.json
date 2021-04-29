@@ -72,7 +72,8 @@
   "descriptive_toggle",
   "sensitivity_toggle",
   "amended_from",
-  "prescription"
+  "prescription",
+  "healthcare_service_order"
  ],
  "fields": [
   {
@@ -572,16 +573,21 @@
    "default": "0",
    "fieldname": "imaging_toggle",
    "fieldtype": "Check"
+  },
+  {
+   "fieldname": "healthcare_service_order",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Healthcare Service Order",
+   "no_copy": 1,
+   "options": "Healthcare Service Order",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "links": [
-  {
-   "link_doctype": "Nursing Task",
-   "link_fieldname": "reference_name"
-  }
- ],
- "modified": "2022-10-17 05:26:49.198517",
+ "links": [],
+ "modified": "2020-11-30 11:04:17.195848",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",

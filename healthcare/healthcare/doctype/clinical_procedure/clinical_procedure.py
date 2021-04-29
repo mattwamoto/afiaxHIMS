@@ -139,6 +139,11 @@ class ClinicalProcedure(Document):
 		if self.procedure_template:
 			self.create_nursing_tasks()
 
+		self.db_set('status', 'Completed')
+
+		if self.healthcare_service_order:
+			frappe.db.set_value('Healthcare Service Order', self.healthcare_service_order, 'status', 'Completed')
+
 		if self.consume_stock and self.items:
 			return stock_entry
 
