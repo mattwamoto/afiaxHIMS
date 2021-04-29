@@ -8,10 +8,11 @@ def get_data():
 			"Patient Medical Record": "reference_name",
 			"Inpatient Medication Order": "patient_encounter",
 			"Nursing Task": "reference_name",
+			"Healthcare Service Order": "order_group",
 		},
 		"transactions": [
 			{"label": _("Records"), "items": ["Vital Signs", "Patient Medical Record"]},
-			{"label": _("Orders"), "items": ["Inpatient Medication Order", "Nursing Task"]},
+			{"label": _("Orders"), "items": ["Inpatient Medication Order", "Nursing Task", "Healthcare Service Order"]},
 		],
 		"disable_create_buttons": ["Inpatient Medication Order"],
 	}
