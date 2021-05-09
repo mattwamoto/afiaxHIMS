@@ -15,6 +15,7 @@ from erpnext.stock.stock_ledger import get_previous_sle
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 from healthcare.healthcare.utils import validate_nursing_tasks
 
+from erpnext.healthcare.doctype.healthcare_insurance_claim.healthcare_insurance_claim import make_insurance_claim
 
 class ClinicalProcedure(Document):
 	def validate(self):
@@ -50,7 +51,13 @@ class ClinicalProcedure(Document):
 
 	def on_submit(self):
 		self.create_nursing_tasks(post_event=False)
-		make_insurance_claim(self)
+		if self.insurance_subscription and not self.insurance_claim:
+			make_insurance_claim(
+				doc=self,
+				service_doctype='Clinical Procedure Template',
+				service=self.procedure_template,
+				qty=1
+			)
 
 	def create_nursing_tasks(self, post_event=True):
 		if post_event:
@@ -317,14 +324,3 @@ def make_procedure(source_name, target_doc=None):
 	)
 
 	return doc
-
-
-def make_insurance_claim(doc):
-	if doc.insurance_subscription and not doc.insurance_claim:
-		from erpnext.healthcare.utils import create_insurance_claim
-		billing_item = frappe.get_cached_value('Clinical Procedure Template', doc.procedure_template, 'item')
-		insurance_claim, approval_status = create_insurance_claim(doc, 'Clinical Procedure Template', doc.procedure_template, 1, billing_item)
-		if insurance_claim:
-			frappe.set_value(doc.doctype, doc.name ,'insurance_claim', insurance_claim)
-			frappe.set_value(doc.doctype, doc.name ,'approval_status', approval_status)
-			doc.reload()

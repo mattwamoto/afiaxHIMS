@@ -6,9 +6,8 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import get_link_to_form, getdate, now_datetime
-from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
-
+from frappe.utils import getdate, cstr, get_link_to_form
+from erpnext.healthcare.doctype.healthcare_insurance_claim.healthcare_insurance_claim import make_insurance_claim
 
 class LabTest(Document):
 	def validate(self):
@@ -26,7 +25,13 @@ class LabTest(Document):
 		if self.healthcare_service_order:
 			frappe.db.set_value('Healthcare Service Order', self.healthcare_service_order, 'status', 'Completed')
 
-		make_insurance_claim(self)
+		if self.insurance_subscription and not self.insurance_claim:
+			make_insurance_claim(
+				doc=self,
+				service_doctype='Lab Test Template',
+				service=self.template,
+				qty=1
+			)
 
 	def on_cancel(self):
 		self.db_set("status", "Cancelled")
