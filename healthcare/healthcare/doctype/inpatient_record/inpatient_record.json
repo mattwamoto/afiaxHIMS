@@ -31,7 +31,7 @@
   "insurance_claim",
   "column_break_23",
   "insurance_company",
-  "claim_status",
+  "approval_status",
   "references",
   "admission_encounter",
   "admission_practitioner",
@@ -511,9 +511,9 @@
    "read_only": 1
   },
   {
-   "fetch_from": "insurance_claim.claim_status",
+   "fetch_from": "insurance_claim.approval_status",
    "fetch_if_empty": 1,
-   "fieldname": "claim_status",
+   "fieldname": "approval_status",
    "fieldtype": "Select",
    "label": "Claim Status",
    "options": "\nPending\nApproved\nRejected\nInvoiced",

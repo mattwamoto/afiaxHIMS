@@ -89,7 +89,7 @@ def get_appointments_to_invoice(patient, company):
 				income_account = get_income_account(appointment.practitioner, appointment.company)
 
 			if appointment.insurance_claim:
-				if appointment.claim_status == 'Approved':
+				if appointment.approval_status == 'Approved':
 					coverage, discount, price_list_rate = frappe.get_cached_value('Healthcare Insurance Claim', appointment.insurance_claim, ['coverage', 'discount', 'price_list_rate'])
 					appointments_to_invoice.append({
 						'reference_type': 'Patient Appointment',
@@ -140,7 +140,7 @@ def get_encounters_to_invoice(patient, company):
 					income_account = get_income_account(encounter.practitioner, encounter.company)
 
 				if encounter.insurance_claim:
-					if encounter.claim_status == 'Approved':
+					if encounter.approval_status == 'Approved':
 						coverage, discount, price_list_rate = frappe.get_cached_value('Healthcare Insurance Claim', encounter.insurance_claim, ['coverage', 'discount', 'price_list_rate'])
 						encounters_to_invoice.append({
 							'reference_type': 'Patient Encounter',
@@ -177,6 +177,19 @@ def get_lab_tests_to_invoice(patient, company):
 			"Lab Test Template", lab_test.template, ["item", "is_billable"]
 		)
 		if is_billable:
+			if lab_test.insurance_claim:
+				if lab_test.approval_status == 'Approved':
+					coverage, discount, price_list_rate = frappe.get_cached_value('Healthcare Insurance Claim', lab_test.insurance_claim, ['coverage', 'discount', 'price_list_rate'])
+					lab_tests_to_invoice.append({
+						'reference_type': 'Lab Test',
+						'reference_name': lab_test.name,
+						'service': item,
+						'rate': price_list_rate,
+						'discount_percentage':discount,
+						'insurance_claim_coverage': coverage,
+						'insurance_claim': lab_test.insurance_claim
+					})
+		else:
 			lab_tests_to_invoice.append({
 				'reference_type': 'Lab Test',
 				'reference_name': lab_test.name,
@@ -233,7 +246,7 @@ def get_clinical_procedures_to_invoice(patient, company):
 			)
 
 			if procedure.insurance_claim:
-					if procedure.claim_status == 'Approved':
+					if procedure.approval_status == 'Approved':
 						coverage, discount, rate = frappe.get_cached_value('Healthcare Insurance Claim', procedure.insurance_claim, ['coverage', 'discount', 'price_list_rate'])
 						clinical_procedures_to_invoice.append({
 							'reference_type': 'Clinical Procedure',
@@ -381,7 +394,7 @@ def get_healthcare_service_orders_to_invoice(patient, company):
 		is_billable = frappe.get_cached_value(service_order.order_doctype, service_order.order_template, 'is_billable')
 		if is_billable:
 			if service_order.insurance_claim:
-				if service_order.claim_status == 'Approved':
+				if service_order.approval_status == 'Approved':
 					coverage, discount, rate = frappe.get_cached_value('Healthcare Insurance Claim', service_order.insurance_claim, ['coverage', 'discount', 'price_list_rate'])
 					service_order_to_invoice.append({
 						'reference_type': 'Healthcare Service Order',
@@ -1105,8 +1118,8 @@ def create_insurance_claim(doc, service_doctype, service, qty, billing_item):
 		insurance_claim.insurance_company = doc.insurance_company
 		insurance_claim.healthcare_service_type = service_doctype
 		insurance_claim.service_template = service
-		insurance_claim.claim_status = 'Approved' if insurance_details.is_auto_approval else 'Pending'
-		insurance_claim.mode_of_claim_approval = 'Automatic' if insurance_details.is_auto_approval else ''
+		insurance_claim.approval_status = 'Approved' if insurance_details.is_auto_approval else 'Pending'
+		insurance_claim.claim_approval_mode = 'Automatic' if insurance_details.is_auto_approval else ''
 		insurance_claim.claim_posting_date = nowdate()
 		insurance_claim.quantity = qty
 		insurance_claim.service_doctype = doc.doctype
@@ -1121,7 +1134,7 @@ def create_insurance_claim(doc, service_doctype, service, qty, billing_item):
 		insurance_claim.coverage_amount = float(insurance_claim.amount) * 0.01 * float(insurance_claim.coverage)
 		insurance_claim.save(ignore_permissions=True)
 		insurance_claim.submit()
-		return insurance_claim.name , insurance_claim.claim_status
+		return insurance_claim.name , insurance_claim.approval_status
 	return False, False
 
 
@@ -1151,5 +1164,5 @@ def update_insurance_claim(insurance_claim, sales_invoice_name, posting_date, to
 	insurance_claim.sales_invoice_posting_date = posting_date
 	insurance_claim.billing_date = nowdate()
 	insurance_claim.billing_amount = total_amount
-	insurance_claim.claim_status = 'Invoiced'
+	insurance_claim.status = 'Invoiced'
 	insurance_claim.save(ignore_permissions= True)
