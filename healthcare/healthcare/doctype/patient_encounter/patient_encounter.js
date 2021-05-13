@@ -128,9 +128,10 @@ frappe.ui.form.on('Patient Encounter', {
 		});
 
 		frm.set_df_property('patient', 'read_only', frm.doc.appointment ? 1 : 0);
-		frm.set_query('insurance_subscription', function(){
-			return{
-				filters:{
+
+		frm.set_query('insurance_subscription', function() {
+			return {
+				filters: {
 					'patient': frm.doc.patient,
 					'docstatus': 1
 				}
