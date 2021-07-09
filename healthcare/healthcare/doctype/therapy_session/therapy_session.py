@@ -15,6 +15,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 	get_receivable_account,
 )
+from erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order import update_service_order_status
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 from healthcare.healthcare.utils import validate_nursing_tasks
 
@@ -80,6 +81,9 @@ class TherapySession(Document):
 
 	def after_insert(self):
 		self.create_nursing_tasks(post_event=False)
+
+		if self.service_order:
+			update_service_order_status(self.service_order, self.doctype, self.name)
 
 	def create_nursing_tasks(self, post_event=True):
 		template = frappe.db.get_value("Therapy Type", self.therapy_type, "nursing_checklist_template")
