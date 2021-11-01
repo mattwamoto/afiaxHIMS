@@ -31,7 +31,6 @@
   "start_date",
   "start_time",
   "sample",
-  "referring_practitioner",
   "insurance_section",
   "insurance_subscription",
   "insurance_claim",
@@ -303,12 +302,6 @@
    "label": "Medical Code",
    "options": "Medical Code",
    "read_only": 1
-  },
-  {
-   "fieldname": "referring_practitioner",
-   "fieldtype": "Link",
-   "label": "Referring Practitioner",
-   "options": "Healthcare Practitioner"
   },
   {
    "fieldname": "insurance_section",

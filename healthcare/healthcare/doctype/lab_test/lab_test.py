@@ -37,22 +37,14 @@ class LabTest(Document):
 			self.sensitivity_test_items = sensitivity
 
 	def after_insert(self):
-		if self.prescription:
-			frappe.db.set_value("Lab Prescription", self.prescription, "lab_test_created", 1)
-			if frappe.db.get_value("Lab Prescription", self.prescription, "invoiced"):
+		if self.service_order:
+			update_service_order_status(self.service_order, self.doctype, self.name)
+			if frappe.db.get_value("Healthcare Service Order", self.service_order, "invoiced"):
 				self.invoiced = True
 
 		if not self.lab_test_name and self.template:
 			self.load_test_from_template()
 			self.reload()
-		
-		if self.service_order:
-			update_service_order_status(self.service_order, self.doctype, self.name)
-
-			# create nursing tasks
-			template = frappe.db.get_value("Lab Test Template", self.template, "nursing_checklist_template")
-			if template:
-				NursingTask.create_nursing_tasks_from_template(template, self, start_time=now_datetime())
 
 	def load_test_from_template(self):
 		lab_test = self
@@ -140,17 +132,19 @@ def create_lab_test_from_encounter(encounter):
 	lab_test_created = False
 	encounter = frappe.get_doc("Patient Encounter", encounter)
 
-	if encounter and encounter.lab_test_prescription:
-		patient = frappe.get_doc("Patient", encounter.patient)
-		for item in encounter.lab_test_prescription:
-			if not item.lab_test_created:
-				template = get_lab_test_template(item.lab_test_code)
+	if encounter:
+		patient = frappe.get_doc('Patient', encounter.patient)
+		service_orders = frappe.db.get_list('Healthcare Service Order', filters={ 'order_group': encounter.name, 'status': ['!=', 'Completed'], 'template_dt': 'Lab Test Template'},
+		fields=['name'])
+		if service_orders:
+			for service_order in service_orders:
+				service_order_doc = frappe.get_doc('Healthcare Service Order', service_order)
+				template = get_lab_test_template(service_order_doc.template_dn)
 				if template:
-					lab_test = create_lab_test_doc(
-						item.invoiced, encounter.practitioner, patient, template, encounter.company
-					)
-					lab_test.save(ignore_permissions=True)
-					frappe.db.set_value("Lab Prescription", item.name, "lab_test_created", 1)
+					lab_test = create_lab_test_doc(service_order_doc.invoiced, encounter.practitioner, patient, template, encounter.company)
+					lab_test.service_order = service_order_doc.name
+					lab_test.save(ignore_permissions = True)
+					frappe.db.set_value('Healthcare Service Order', service_order_doc.name, 'status', 'Scheduled')
 					if not lab_test_created:
 						lab_test_created = lab_test.name
 					else:
@@ -385,8 +379,8 @@ def load_result_format(lab_test, template, prescription, invoice):
 		if prescription:
 			lab_test.prescription = prescription
 			if invoice:
-				frappe.db.set_value("Lab Prescription", prescription, "invoiced", True)
-		lab_test.save(ignore_permissions=True)  # Insert the result
+				frappe.db.set_value('Healthcare Service Order', lab_test.service_order, 'status', 'Completed')
+		lab_test.save(ignore_permissions=True) # Insert the result
 		return lab_test
 
 
@@ -403,31 +397,18 @@ def get_lab_test_prescribed(patient):
 	return frappe.db.sql(
 		"""
 			select
-				lp.name,
-				lp.lab_test_code,
-				lp.parent,
-				lp.invoiced,
-				pe.practitioner,
-				pe.practitioner_name,
-				pe.encounter_date
+				hso.template_dn as lab_test_code,
+				hso.order_group,
+				hso.invoiced,
+				hso.practitioner as practitioner,
+				hso.order_date as encounter_date,
+				hso.name,
+				hso.insurance_subscription,
+				hso.insurance_company
 			from
-				`tabPatient Encounter` pe, `tabLab Prescription` lp
+				`tabHealthcare Service Order` hso
 			where
-				pe.patient=%s
-				and lp.parent=pe.name
-				and lp.lab_test_created=0
-		""",
-		(patient),
-	)
-
-def make_insurance_claim(doc):
-	if doc.insurance_subscription and not doc.insurance_claim:
-		from erpnext.healthcare.utils import create_insurance_claim
-		billing_item = frappe.get_cached_value('Lab Test Template', doc.template, 'item')
-		insurance_claim, approval_status = create_insurance_claim(doc, 'Lab Test Template', doc.template, 1, billing_item)
-		if insurance_claim:
-			frappe.set_value(doc.doctype, doc.name , {
-				'insurance_claim': insurance_claim,
-				'approval_status': approval_status,
-			})
-			doc.reload()
+				hso.patient=%s
+				and hso.status!=%s
+				and hso.template_dt=%s
+		''', (patient, 'Completed', 'Lab Test Template'))
