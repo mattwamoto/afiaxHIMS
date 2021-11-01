@@ -15,7 +15,7 @@ from erpnext.stock.stock_ledger import get_previous_sle
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 from healthcare.healthcare.utils import validate_nursing_tasks
 
-from erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order import update_service_order_status
+from healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order import update_service_order_status
 
 class ClinicalProcedure(Document):
 	def validate(self):
