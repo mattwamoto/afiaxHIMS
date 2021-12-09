@@ -40,7 +40,7 @@ def get_data():
 			},
 			{
 				"label": _("Subscriptions"),
-				"items": ["Healthcare Insurance Subscription"],
-			},
-		],
+				"items": ["Patient Insurance Policy"]
+			}
+		]
 	}

@@ -34,12 +34,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 from healthcare.healthcare.doctype.healthcare_insurance_claim.healthcare_insurance_claim import (
 	make_insurance_claim,
 )
-
-# todo: clean up imports
-try:
-	from erpnext.hr.doctype.employee.employee import is_holiday
-except ImportError:
-	from erpnext.setup.doctype.employee.employee import is_holiday
+from healthcare.healthcare.doctype.healthcare_insurance_claim.healthcare_insurance_claim import make_insurance_claim
 
 
 class MaximumCapacityError(frappe.ValidationError):
@@ -67,19 +62,19 @@ class PatientAppointment(Document):
 		self.update_fee_validity()
 		send_confirmation_msg(self)
 
-		if self.insurance_subscription and self.appointment_type and not check_fee_validity(self):
+		if self.insurance_policy and self.appointment_type and not check_fee_validity(self):
 			if frappe.db.get_single_value('Healthcare Settings', 'automate_appointment_invoicing'):
-				#TODO: apply insurance claim
-				frappe.msgprint(_('Insurance Claim not created!<br>Not supported as <b>Automate Appointment Invoicing</b> enabled'),
+				#TODO: apply insurance coverage
+				frappe.msgprint(_('Insurance Coverage not created!<br>Not supported as <b>Automate Appointment Invoicing</b> enabled'),
 					alert=True, indicator='warning')
 			else:
-				self.make_insurance_claim()
+				self.make_insurance_coverage()
 
-	def make_insurance_claim(self):
+	def make_insurance_coverage(self):
 		billing_detail = get_service_item_and_practitioner_charge(self)
-		claim = make_insurance_claim(
+		coverage = make_insurance_coverage(
 			patient=self.patient,
-			policy=self.insurance_subscription,
+			policy=self.insurance_policy,
 			company=self.company,
 			template_dt='Appointment Type',
 			template_dn=self.appointment_type,
@@ -87,8 +82,8 @@ class PatientAppointment(Document):
 			qty=1
 		)
 
-		if claim and claim.get('claim'):
-			self.db_set({'insurance_claim': claim.get('claim'), 'claim_status': claim.get('claim_status')})
+		if coverage and coverage.get('coverage'):
+			self.db_set({'insurance_coverage': coverage.get('coverage'), 'coverage_status': coverage.get('coverage_status')})
 
 	def set_title(self):
 		self.title = _("{0} with {1}").format(
@@ -347,6 +342,10 @@ def get_appointment_item(appointment_doc, item):
 
 def cancel_appointment(appointment_id):
 	appointment = frappe.get_doc('Patient Appointment', appointment_id)
+	if appointment.insurance_claim:
+		claim = frappe.get_doc('Healthcare Insurance Claim', appointment.insurance_claim)
+		claim.cancel()
+
 	if appointment.invoiced:
 		sales_invoice = check_sales_invoice_exists(appointment)
 		if sales_invoice and cancel_sales_invoice(sales_invoice):
@@ -568,25 +567,23 @@ def send_confirmation_msg(doc):
 
 @frappe.whitelist()
 def make_encounter(source_name, target_doc=None):
-	doc = get_mapped_doc(
-		"Patient Appointment",
-		source_name,
-		{
-			"Patient Appointment": {
-				"doctype": "Patient Encounter",
-				"field_map": [
-					["appointment", "name"],
-					["patient", "patient"],
-					["practitioner", "practitioner"],
-					["medical_department", "department"],
-					["patient_sex", "patient_sex"],
-					["invoiced", "invoiced"],
-					["company", "company"],
-				],
-			}
-		},
-		target_doc,
-	)
+	doc = get_mapped_doc('Patient Appointment', source_name, {
+		'Patient Appointment': {
+			'doctype': 'Patient Encounter',
+			'field_map': [
+				['appointment', 'name'],
+				['patient', 'patient'],
+				['practitioner', 'practitioner'],
+				['medical_department', 'department'],
+				['patient_sex', 'patient_sex'],
+				['invoiced', 'invoiced'],
+				['company', 'company'],
+				['appointment_type', 'appointment_type'],
+				['insurance_subscription', 'insurance_subscription'],
+				['insurance_claim', 'insurance_claim']
+			]
+		}
+	}, target_doc)
 	return doc
 
 
