@@ -1,2 +1,2 @@
 healthcare.patches.v0_0.setup_abdm_custom_fields
-healthcare.patches.v0_0.setup_healthcare_service_order_and_insurance
+healthcare.patches.v0_0.setup_service_request_and_insurance
